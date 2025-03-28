@@ -8,7 +8,12 @@ function clampGeneValue(value: number): number {
 // Cálculo de fitness
 export function calculateFitness(dragon: Dragon): number {
   const { flightTime, strength, fireBreath } = dragon.genes;
-  return flightTime * 0.4 + strength * 0.3 + fireBreath * 0.3;
+  
+  // Aumentando o impacto de cada característica para maior variação
+  const fitness = flightTime * 0.35 + strength * 0.35 + fireBreath * 0.3;
+  
+  // Aumentando a variação de fitness com uma pequena aleatoriedade
+  return fitness + Math.random() * 10 - 5; // Variabilidade de ±5
 }
 
 // Cor baseada no fitness
@@ -45,19 +50,22 @@ export function mutate(dragon: Dragon, mutationRate: number = 0.1, mutationType:
   if (Math.random() < mutationRate) {
     switch (mutationType) {
       case "random":
-        dragon.genes.flightTime += Math.random() * 40 - 20;
-        dragon.genes.strength += Math.random() * 40 - 20;
-        dragon.genes.fireBreath += Math.random() * 40 - 20;
+        // Maior variação no valor de mutação aleatória
+        dragon.genes.flightTime += Math.random() * 50 - 25;  // Variando mais
+        dragon.genes.strength += Math.random() * 50 - 25;
+        dragon.genes.fireBreath += Math.random() * 50 - 25;
         break;
       case "small":
-        dragon.genes.flightTime += Math.random() * 5 - 2.5;
-        dragon.genes.strength += Math.random() * 5 - 2.5;
-        dragon.genes.fireBreath += Math.random() * 5 - 2.5;
+        // Pequena variação
+        dragon.genes.flightTime += Math.random() * 10 - 5;
+        dragon.genes.strength += Math.random() * 10 - 5;
+        dragon.genes.fireBreath += Math.random() * 10 - 5;
         break;
       case "directed":
-        dragon.genes.flightTime += 5;
-        dragon.genes.strength += Math.random() * 10 - 5;
-        dragon.genes.fireBreath += 5;
+        // Mutação mais controlada
+        dragon.genes.flightTime += Math.random() * 10 - 5;
+        dragon.genes.strength += Math.random() * 15 - 7.5;
+        dragon.genes.fireBreath += Math.random() * 10 - 5;
         break;
       default:
         break;
@@ -144,7 +152,6 @@ export function crossover(parent1: Dragon, parent2: Dragon, type: string): Drago
   }
 }
 
-// Evolução da população
 export function evolvePopulation(population: Dragon[], mutationType: string = "random", crossoverType: string = "uniform"): Dragon[] {
   const parents = selectParents(population);
   const newPopulation: Dragon[] = [];
