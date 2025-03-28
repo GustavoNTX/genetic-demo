@@ -1,87 +1,163 @@
-import { Individual } from "./Individual";
-import { Population } from "./Population";
+import { Dragon } from "./Dragon";
 
-// Seleção por torneio: Escolhe o melhor entre N candidatos aleatórios
-export function tournamentSelection(population: Population, tournamentSize: number): Individual {
-  const tournament: Individual[] = [];
-  for (let i = 0; i < tournamentSize; i++) {
-    const randomIndex = Math.floor(Math.random() * population.individuals.length);
-    tournament.push(population.individuals[randomIndex]);
-  }
-  return tournament.reduce((best, ind) => (ind.fitness > best.fitness ? ind : best));
+// Função para garantir que os genes estão entre 0 e 100
+function clampGeneValue(value: number): number {
+  return Math.max(0, Math.min(100, value));
 }
 
-// Crossover de um ponto
-export function onePointCrossover(parent1: Individual, parent2: Individual): [Individual, Individual] {
-  const geneLength = parent1.genes.length;
-  const crossoverPoint = Math.floor(Math.random() * geneLength);
-
-  const child1Genes = [
-    ...parent1.genes.slice(0, crossoverPoint),
-    ...parent2.genes.slice(crossoverPoint),
-  ];
-  const child2Genes = [
-    ...parent2.genes.slice(0, crossoverPoint),
-    ...parent1.genes.slice(crossoverPoint),
-  ];
-
-  return [new Individual(child1Genes), new Individual(child2Genes)];
+// Cálculo de fitness
+export function calculateFitness(dragon: Dragon): number {
+  const { flightTime, strength, fireBreath } = dragon.genes;
+  return flightTime * 0.4 + strength * 0.3 + fireBreath * 0.3;
 }
 
-// Mutação: altera aleatoriamente um gene com uma pequena probabilidade
-export function mutate(ind: Individual, mutationRate: number): void {
-  ind.genes = ind.genes.map(gene =>
-    Math.random() < mutationRate ? Math.floor(Math.random() * 11) : gene
-  );
+// Cor baseada no fitness
+export function getColorByFitness(fitness: number): string {
+  if (fitness > 80) return "gold";
+  if (fitness > 60) return "red";
+  if (fitness > 40) return "blue";
+  return "gray";
 }
 
-// Algoritmo genético completo (loop evolutivo)
-export function runGeneticAlgorithm({
-  populationSize,
-  geneLength,
-  generations,
-  tournamentSize,
-  mutationRate,
-}: {
-  populationSize: number;
-  geneLength: number;
-  generations: number;
-  tournamentSize: number;
-  mutationRate: number;
-}): Individual {
-  let population = new Population(populationSize, geneLength);
-  population.evaluate();
+// Criar a população inicial
+export function createInitialPopulation(size: number): Dragon[] {
+  return Array.from({ length: size }, (_, i) => {
+    const genes = {
+      flightTime: Math.random() * 100,
+      strength: Math.random() * 100,
+      fireBreath: Math.random() * 100,
+    };
 
-  let bestIndividual = population.individuals[0];
+    const fitness = calculateFitness({ id: i, genes, fitness: 0, color: "", size: 1 });
 
-  for (let gen = 0; gen < generations; gen++) {
-    const newIndividuals: Individual[] = [];
+    return {
+      id: i,
+      genes,
+      fitness,
+      color: getColorByFitness(fitness),
+      size: 1,
+    };
+  });
+}
 
-    // Criar nova geração
-    while (newIndividuals.length < populationSize) {
-      const parent1 = tournamentSelection(population, tournamentSize);
-      const parent2 = tournamentSelection(population, tournamentSize);
-      const [child1, child2] = onePointCrossover(parent1, parent2);
-
-      mutate(child1, mutationRate);
-      mutate(child2, mutationRate);
-
-      child1.calculateFitness();
-      child2.calculateFitness();
-
-      newIndividuals.push(child1, child2);
+// Mutação com três tipos
+export function mutate(dragon: Dragon, mutationRate: number = 0.1, mutationType: string = "random"): Dragon {
+  if (Math.random() < mutationRate) {
+    switch (mutationType) {
+      case "random":
+        dragon.genes.flightTime += Math.random() * 40 - 20;
+        dragon.genes.strength += Math.random() * 40 - 20;
+        dragon.genes.fireBreath += Math.random() * 40 - 20;
+        break;
+      case "small":
+        dragon.genes.flightTime += Math.random() * 5 - 2.5;
+        dragon.genes.strength += Math.random() * 5 - 2.5;
+        dragon.genes.fireBreath += Math.random() * 5 - 2.5;
+        break;
+      case "directed":
+        dragon.genes.flightTime += 5;
+        dragon.genes.strength += Math.random() * 10 - 5;
+        dragon.genes.fireBreath += 5;
+        break;
+      default:
+        break;
     }
 
-    population.individuals = newIndividuals;
-    
-    // Atualiza o melhor indivíduo encontrado
-    const currentBest = population.individuals.reduce((best, ind) =>
-      ind.fitness > best.fitness ? ind : best
-    );
-    if (currentBest.fitness > bestIndividual.fitness) {
-      bestIndividual = currentBest;
+    // Garantir que os valores dos genes estão entre 0 e 100
+    dragon.genes.flightTime = clampGeneValue(dragon.genes.flightTime);
+    dragon.genes.strength = clampGeneValue(dragon.genes.strength);
+    dragon.genes.fireBreath = clampGeneValue(dragon.genes.fireBreath);
+  }
+
+  // Recalcular fitness e cor após a mutação
+  dragon.fitness = calculateFitness(dragon);
+  dragon.color = getColorByFitness(dragon.fitness);
+
+  return dragon;
+}
+
+// Seleção por roleta
+export function selectParents(population: Dragon[]): Dragon[] {
+  const totalFitness = population.reduce((total, dragon) => total + dragon.fitness, 0);
+  const selectedParents: Dragon[] = [];
+
+  for (let i = 0; i < population.length / 2; i++) {
+    let randomValue = Math.random() * totalFitness;
+    let accumulatedFitness = 0;
+    for (let dragon of population) {
+      accumulatedFitness += dragon.fitness;
+      if (accumulatedFitness >= randomValue) {
+        selectedParents.push(dragon);
+        break;
+      }
     }
   }
 
-  return bestIndividual;
+  return selectedParents;
+}
+
+// Crossover de um ponto, uniforme e aritmético
+export function crossover(parent1: Dragon, parent2: Dragon, type: string): Dragon {
+  switch (type) {
+    case "one-point":
+      const crossoverPoint = Math.random();
+      return {
+        id: Math.random(),
+        genes: {
+          flightTime: crossoverPoint < 0.5 ? parent1.genes.flightTime : parent2.genes.flightTime,
+          strength: crossoverPoint < 0.5 ? parent1.genes.strength : parent2.genes.strength,
+          fireBreath: crossoverPoint < 0.5 ? parent1.genes.fireBreath : parent2.genes.fireBreath,
+        },
+        fitness: 0,
+        color: "",
+        size: 1,
+      };
+
+    case "uniform":
+      return {
+        id: Math.random(),
+        genes: {
+          flightTime: Math.random() < 0.5 ? parent1.genes.flightTime : parent2.genes.flightTime,
+          strength: Math.random() < 0.5 ? parent1.genes.strength : parent2.genes.strength,
+          fireBreath: Math.random() < 0.5 ? parent1.genes.fireBreath : parent2.genes.fireBreath,
+        },
+        fitness: 0,
+        color: "",
+        size: 1,
+      };
+
+    case "arithmetic":
+      return {
+        id: Math.random(),
+        genes: {
+          flightTime: (parent1.genes.flightTime + parent2.genes.flightTime) / 2,
+          strength: (parent1.genes.strength + parent2.genes.strength) / 2,
+          fireBreath: (parent1.genes.fireBreath + parent2.genes.fireBreath) / 2,
+        },
+        fitness: 0,
+        color: "",
+        size: 1,
+      };
+
+    default:
+      return parent1;
+  }
+}
+
+// Evolução da população
+export function evolvePopulation(population: Dragon[], mutationType: string = "random", crossoverType: string = "uniform"): Dragon[] {
+  const parents = selectParents(population);
+  const newPopulation: Dragon[] = [];
+
+  while (newPopulation.length < population.length) {
+    const parent1 = parents[Math.floor(Math.random() * parents.length)];
+    const parent2 = parents[Math.floor(Math.random() * parents.length)];
+
+    let offspring = crossover(parent1, parent2, crossoverType);
+    offspring = mutate(offspring, 0.1, mutationType);
+
+    newPopulation.push(offspring);
+  }
+
+  return newPopulation;
 }
