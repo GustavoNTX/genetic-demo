@@ -1,22 +1,17 @@
 import { Dragon } from "./Dragon";
 
-// Função para garantir que os genes estão entre 0 e 100
 function clampGeneValue(value: number): number {
   return Math.max(0, Math.min(100, value));
 }
 
-// Cálculo de fitness
 export function calculateFitness(dragon: Dragon): number {
   const { flightTime, strength, fireBreath } = dragon.genes;
   
-  // Aumentando o impacto de cada característica para maior variação
   const fitness = flightTime * 0.35 + strength * 0.35 + fireBreath * 0.3;
   
-  // Aumentando a variação de fitness com uma pequena aleatoriedade
-  return fitness + Math.random() * 10 - 5; // Variabilidade de ±5
+  return fitness + Math.random() * 10 - 5;
 }
 
-// Cor baseada no fitness
 export function getColorByFitness(fitness: number): string {
   if (fitness > 80) return "gold";
   if (fitness > 60) return "red";
@@ -24,7 +19,6 @@ export function getColorByFitness(fitness: number): string {
   return "gray";
 }
 
-// Criar a população inicial
 export function createInitialPopulation(size: number): Dragon[] {
   return Array.from({ length: size }, (_, i) => {
     const genes = {
@@ -45,24 +39,20 @@ export function createInitialPopulation(size: number): Dragon[] {
   });
 }
 
-// Mutação com três tipos
 export function mutate(dragon: Dragon, mutationRate: number = 0.1, mutationType: string = "random"): Dragon {
   if (Math.random() < mutationRate) {
     switch (mutationType) {
       case "random":
-        // Maior variação no valor de mutação aleatória
         dragon.genes.flightTime += Math.random() * 50 - 25;  // Variando mais
         dragon.genes.strength += Math.random() * 50 - 25;
         dragon.genes.fireBreath += Math.random() * 50 - 25;
         break;
       case "small":
-        // Pequena variação
         dragon.genes.flightTime += Math.random() * 10 - 5;
         dragon.genes.strength += Math.random() * 10 - 5;
         dragon.genes.fireBreath += Math.random() * 10 - 5;
         break;
       case "directed":
-        // Mutação mais controlada
         dragon.genes.flightTime += Math.random() * 10 - 5;
         dragon.genes.strength += Math.random() * 15 - 7.5;
         dragon.genes.fireBreath += Math.random() * 10 - 5;
@@ -71,20 +61,17 @@ export function mutate(dragon: Dragon, mutationRate: number = 0.1, mutationType:
         break;
     }
 
-    // Garantir que os valores dos genes estão entre 0 e 100
     dragon.genes.flightTime = clampGeneValue(dragon.genes.flightTime);
     dragon.genes.strength = clampGeneValue(dragon.genes.strength);
     dragon.genes.fireBreath = clampGeneValue(dragon.genes.fireBreath);
   }
 
-  // Recalcular fitness e cor após a mutação
   dragon.fitness = calculateFitness(dragon);
   dragon.color = getColorByFitness(dragon.fitness);
 
   return dragon;
 }
 
-// Seleção por roleta
 export function selectParents(population: Dragon[]): Dragon[] {
   const totalFitness = population.reduce((total, dragon) => total + dragon.fitness, 0);
   const selectedParents: Dragon[] = [];
@@ -104,7 +91,6 @@ export function selectParents(population: Dragon[]): Dragon[] {
   return selectedParents;
 }
 
-// Crossover de um ponto, uniforme e aritmético
 export function crossover(parent1: Dragon, parent2: Dragon, type: string): Dragon {
   switch (type) {
     case "one-point":

@@ -4,28 +4,26 @@ import { createInitialPopulation, evolvePopulation } from "./genetic/geneticAlgo
 import { Dragon } from "./genetic/Dragon";
 
 export default function App() {
-  const [randomDragons, setRandomDragons] = useState<Dragon[]>([]); // Para armazenar dragões aleatórios
-  const [mutatedDragons, setMutatedDragons] = useState<Dragon[]>([]); // Para armazenar dragões com mutação
-  const [crossoverDragons, setCrossoverDragons] = useState<Dragon[]>([]); // Para armazenar dragões com crossover
-  const [feedbackMessage, setFeedbackMessage] = useState<string>(""); // Mensagem de feedback
+  const [randomDragons, setRandomDragons] = useState<Dragon[]>([]); 
+  const [mutatedDragons, setMutatedDragons] = useState<Dragon[]>([]); 
+  const [crossoverDragons, setCrossoverDragons] = useState<Dragon[]>([]); 
+  const [feedbackMessage, setFeedbackMessage] = useState<string>(""); 
 
-  // Função para gerar dragões aleatórios
   const handleGenerateRandomDragons = () => {
-    const newDragons = createInitialPopulation(5); // Gera 5 dragões aleatórios
-    setRandomDragons(newDragons); // Atualiza os dragões aleatórios
+    const newDragons = createInitialPopulation(5); 
+    setRandomDragons(newDragons); 
     setFeedbackMessage("Dragões Aleatórios Gerados com Sucesso!");
   };
 
-  // Função para evoluir os dragões com mutação e crossover
   const handleEvolve = (mutationType: string, crossoverType: string) => {
     const newDragons = evolvePopulation(randomDragons, mutationType, crossoverType);
-    setMutatedDragons(newDragons); // Atualiza os dragões com mutação
+    setMutatedDragons(newDragons); 
     setFeedbackMessage(`Mutação com tipo "${mutationType}" e crossover "${crossoverType}" aplicada!`);
   };
 
   const handleCrossover = (mutationType: string, crossoverType: string) => {
     const newDragons = evolvePopulation(randomDragons, mutationType, crossoverType);
-    setCrossoverDragons(newDragons); // Atualiza os dragões com crossover
+    setCrossoverDragons(newDragons); 
     setFeedbackMessage(`Crossover de tipo "${crossoverType}" realizado com sucesso!`);
   };
 
@@ -33,14 +31,12 @@ export default function App() {
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4 text-center">Evolução dos Dragões</h1>
 
-      {/* Feedback visual */}
       {feedbackMessage && (
         <div className="text-center mb-4 text-green-500">
           <p>{feedbackMessage}</p>
         </div>
       )}
 
-      {/* Botão de gerar dragões aleatórios */}
       <div className="flex justify-center gap-4 mb-4">
         <button
           onClick={handleGenerateRandomDragons}
@@ -50,7 +46,6 @@ export default function App() {
         </button>
       </div>
 
-      {/* Cards de dragões aleatórios */}
       {randomDragons.length > 0 && (
         <div className="mb-4">
           <h2 className="text-xl font-bold mb-2 text-center">Dragões Aleatórios</h2>
@@ -76,7 +71,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Botões de mutação */}
       <div className="flex justify-center gap-4 mb-4">
         <button
           onClick={() => handleEvolve("random", "uniform")}
@@ -98,7 +92,6 @@ export default function App() {
         </button>
       </div>
 
-      {/* Cards de dragões mutados */}
       {mutatedDragons.length > 0 && (
         <div className="mb-4">
           <h2 className="text-xl font-bold mb-2 text-center">Dragões Mutados</h2>
@@ -123,7 +116,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Botões de crossover */}
       <div className="flex justify-center gap-4 mb-4">
         <button
           onClick={() => handleCrossover("random", "one-point")}
@@ -145,7 +137,6 @@ export default function App() {
         </button>
       </div>
 
-      {/* Cards de dragões com crossover */}
       {crossoverDragons.length > 0 && (
         <div className="mb-4">
           <h2 className="text-xl font-bold mb-2 text-center">Dragões com Crossover</h2>
